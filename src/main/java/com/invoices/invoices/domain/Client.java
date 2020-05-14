@@ -1,5 +1,6 @@
 package com.invoices.invoices.domain;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +18,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNullElse;
 
 @Entity
-@Setter
-@RequiredArgsConstructor
-@EqualsAndHashCode
-@Value
+@Data
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    Long id;
 
     String companyName;
 
@@ -33,6 +31,13 @@ public class Client {
 
     @OneToMany
     List<Address> deliveryAddresses;
+
+    @Builder
+    public Client(String companyName, List<Person> contactPersons, List<Address> deliveryAddresses) {
+        this.companyName = companyName;
+        this.contactPersons = contactPersons;
+        this.deliveryAddresses = deliveryAddresses;
+    }
 
     public List<Person> getContactPersons() {
         return requireNonNullElse(this.contactPersons, emptyList());
