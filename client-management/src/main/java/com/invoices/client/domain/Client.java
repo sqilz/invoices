@@ -1,4 +1,4 @@
-package com.invoices.invoices.domain;
+package com.invoices.client.domain;
 
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +25,7 @@ public class Client {
     Long id;
 
     String companyName;
+    String nip;
 
     @OneToMany
     List<Person> contactPersons;

@@ -1,5 +1,6 @@
-package com.invoices.invoices.domain;
+package com.invoices.client.domain;
 
+import lombok.Builder;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -18,4 +19,12 @@ public class Address {
     private String houseNumber;
     private String city;
     private String zipCode;
+
+    @Builder
+    public Address(String street, String houseNumber, String city, String zipCode) {
+        this.street = street;
+        this.houseNumber = houseNumber;
+        this.city = city;
+        this.zipCode = zipCode;
+    }
 }

@@ -13,3 +13,5 @@ pluginManagement {
 	}
 }
 rootProject.name = 'invoices'
+include 'client-management'
+include 'invoice-management'
