@@ -1,7 +1,8 @@
 package com.invoices.client.domain;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,37 +15,30 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNullElse;
 
 @Entity
-@Data
-public class Client {
+@NoArgsConstructor
+@Getter
+public abstract class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    Long clientId;
+    Long id;
 
-    String companyName;
-    String nip;
-
-    @OneToMany
-    List<Person> contactPersons;
+    String name;
+    Address address;
+    String phoneNumber;
 
     @OneToMany
-    List<Address> deliveryAddresses;
+    private List<Address> deliveryAddresses;
 
     @Builder
-    public Client(String companyName, List<Person> contactPersons, List<Address> deliveryAddresses) {
-        this.companyName = companyName;
-        this.contactPersons = contactPersons;
+    Client(String name, Address address, String phoneNumber, List<Address> deliveryAddresses) {
+        this.name = name;
+        this.address = address;
+        this.phoneNumber = phoneNumber;
         this.deliveryAddresses = deliveryAddresses;
-    }
-
-    public List<Person> getContactPersons() {
-        return requireNonNullElse(this.contactPersons, emptyList());
     }
 
     public List<Address> getDeliveryAddresses() {
         return requireNonNullElse(this.deliveryAddresses, emptyList());
     }
 
-    public String getCompanyName() {
-        return requireNonNullElse(this.companyName, "-");
-    }
 }

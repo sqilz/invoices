@@ -2,28 +2,22 @@ package com.invoices.client.domain;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import java.util.List;
 
 @Entity
 @Data
-public class Person {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-    private String name;
+@EqualsAndHashCode(callSuper = false)
+@NoArgsConstructor
+public class Person extends Client {
     private String surname;
-    private String phoneNumber;
-    private Address address;
 
     @Builder
-    public Person(String name, String surname, String phoneNumber, Address address) {
-        this.name = name;
+    public Person(String name, Address address, String phoneNumber, List<Address> deliveryAddresses, String surname) {
+        super(name, address, phoneNumber, deliveryAddresses);
         this.surname = surname;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
     }
 }

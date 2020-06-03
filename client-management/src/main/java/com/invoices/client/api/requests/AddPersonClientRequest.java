@@ -4,13 +4,14 @@ import com.invoices.client.domain.Address;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.List;
+
 @Value
 @Builder
-public class UpdateClientRequest {
-    Long clientId;
+public class AddPersonClientRequest {
     String name;
     String surname;
     String phoneNumber;
     Address address;
-    Address deliveryAddress;
+    List<Address> deliveryAddresses;
 }

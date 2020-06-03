@@ -1,11 +1,16 @@
 package com.invoices.client;
 
-import com.invoices.client.api.requests.AddClientRequest;
+import com.invoices.client.api.requests.AddCompanyClientRequest;
+import com.invoices.client.api.requests.AddPersonClientRequest;
 import com.invoices.client.api.requests.RemoveClientRequest;
-import com.invoices.client.api.requests.UpdateClientRequest;
+import com.invoices.client.api.requests.UpdateCompanyClientRequest;
+import com.invoices.client.api.requests.UpdatePersonClientRequest;
 import com.invoices.client.domain.Client;
+import com.invoices.client.domain.Company;
+import com.invoices.client.domain.Person;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -16,29 +21,49 @@ import org.springframework.stereotype.Service;
 public class ClientService {
     private final ClientRepository clientRepository;
 
-    public Long addClient(AddClientRequest request) {
-        Client client = this.clientRepository.save(Client.builder()
-                .companyName(request.getCompanyName())
-                .contactPersons(request.getContactPersons())
+    public Long addCompanyClient(AddCompanyClientRequest request) {
+        Company company = (Company) this.clientRepository.save(Company.builder()
+                .name(request.getName())
+                .contactPeople(request.getContactPeople())
                 .deliveryAddresses(request.getDeliveryAddresses())
                 .build());
 
-        log.info("Client successfully added!");
+        log.info("Company successfully added!");
 
-        return client.getClientId();
+        return company.getId();
     }
 
+    public Long addPersonClient(AddPersonClientRequest request) {
+        Person person = (Person) this.clientRepository.save(Person.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .address(request.getAddress())
+                .phoneNumber(request.getPhoneNumber())
+                .deliveryAddresses(request.getDeliveryAddresses())
+                .build());
+
+        log.info("Company successfully added!");
+
+        return person.getId();
+    }
+
+    @SneakyThrows
     public Long removeClient(RemoveClientRequest request) {
-        Client client = this.clientRepository.findById(request.getClientId())
+        Client client = (Client) this.clientRepository.findById(request.getClientId())
                 .orElseThrow(() -> new IllegalStateException("no such client"));
 
         this.clientRepository.delete(client);
 
-        log.info("Client removed");
-        return client.getClientId();
+        log.info("Company removed");
+        return client.getId();
     }
 
-    public Long updateClient(UpdateClientRequest request) {
+    public Person updatePersonClient(UpdatePersonClientRequest request) {
+
+        return 1L;
+    }
+
+    public Company updateCompanyClient(UpdateCompanyClientRequest request) {
 
         return 1L;
     }

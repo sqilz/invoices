@@ -1,11 +1,15 @@
 package com.invoices.client;
 
-import com.invoices.client.api.requests.AddClientRequest;
+import com.invoices.client.api.requests.AddCompanyClientRequest;
+import com.invoices.client.api.requests.AddPersonClientRequest;
 import com.invoices.client.api.requests.RemoveClientRequest;
-import com.invoices.client.api.requests.UpdateClientRequest;
+import com.invoices.client.api.requests.UpdateCompanyClientRequest;
+import com.invoices.client.api.requests.UpdatePersonClientRequest;
 import com.invoices.client.domain.Address;
-import com.invoices.client.domain.Client;
+import com.invoices.client.domain.Company;
+import com.invoices.client.domain.CompanyContacts;
 import com.invoices.client.domain.Person;
+import com.invoices.client.exceptions.AttemptToAddClientWithExistingNip;
 import com.invoices.client.exceptions.AttemptToRemoveNonExistingClientException;
 import com.invoices.client.exceptions.AttemptToUpdateNonExistingClientException;
 import org.hamcrest.MatcherAssert;
@@ -22,7 +26,9 @@ import java.util.Random;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +40,12 @@ class ClientServiceTest {
     private static final String CITY = "warsaw";
     private static final String STREET = "magnalia";
     private static final String ZIP = "00-000";
+    private static final Address ADDRESS = Address.builder()
+            .city(CITY)
+            .street(STREET)
+            .houseNumber("1")
+            .zipCode(ZIP)
+            .build();
 
     private ClientService clientService;
 
@@ -48,20 +60,14 @@ class ClientServiceTest {
     }
 
     @Test
-    void shouldRegisterNewClient() {
+    void shouldRegisterNewCompanyClient() {
         // given
-        AddClientRequest request = AddClientRequest.builder()
-                .companyName(COMPANY_NAME)
-                .contactPersons(List.of(Person.builder()
+        AddCompanyClientRequest request = AddCompanyClientRequest.builder()
+                .name(COMPANY_NAME)
+                .contactPeople(List.of(CompanyContacts.builder()
                         .name(NAME)
                         .surname(SURNAME)
                         .phoneNumber(PHONE_NUMBER)
-                        .address(Address.builder()
-                                .houseNumber(Integer.toString(1))
-                                .city(CITY)
-                                .street(STREET)
-                                .zipCode(ZIP)
-                                .build())
                         .build()))
                 .deliveryAddresses(List.of(Address.builder()
                         .houseNumber("2A")
@@ -72,7 +78,7 @@ class ClientServiceTest {
                 .build();
 
         // when
-        Long clientId = this.clientService.addClient(request);
+        Long clientId = this.clientService.addCompanyClient(request);
 
         // then
         MatcherAssert.assertThat(clientId, isNotNull());
@@ -80,56 +86,107 @@ class ClientServiceTest {
     }
 
     @Test
-    void shouldNotRegisterDuplicateClient() {
+    void shouldRegisterNewPersonClient() {
         // given
-        when(this.clientService)
+        AddPersonClientRequest request = AddPersonClientRequest.builder()
+                .name(NAME)
+                .surname(SURNAME)
+                .address(Address.builder().build())
+                .phoneNumber(PHONE_NUMBER)
+                .deliveryAddresses(List.of(Address.builder()
+                        .houseNumber("2A")
+                        .street(STREET)
+                        .city(CITY)
+                        .zipCode(ZIP)
+                        .build()))
+                .build();
+
         // when
+        Long clientId = this.clientService.addPersonClient(request);
 
         // then
+        MatcherAssert.assertThat(clientId, isNotNull());
     }
 
     @Test
-    void shouldUpdateExistingClient() {
+    void shouldNotRegisterDuplicateCompanyClient() {
+        // given
+        AddCompanyClientRequest request = AddCompanyClientRequest.builder()
+                .nip("test")
+                .build();
+        when(this.clientRepository.existsByNip(anyString())).thenThrow(new AttemptToAddClientWithExistingNip());
+        // when
+        Assertions.assertThrows(AttemptToAddClientWithExistingNip.class,
+                () -> this.clientService.addCompanyClient(request));
+    }
+
+    @Test
+    void shouldNotRegisterDuplicatePersonClient() {
+        // given
+        AddPersonClientRequest request = AddPersonClientRequest.builder()
+                .name(NAME)
+                .surname(SURNAME)
+                .address(ADDRESS)
+                .phoneNumber("test")
+                .build();
+        when(this.clientRepository.existsByNameAndSurnameAndAddress(anyString(), anyString(), any())).thenThrow(new AttemptToAddClientWithExistingNip());
+        // when
+        Assertions.assertThrows(AttemptToAddClientWithExistingNip.class,
+                () -> this.clientService.addPersonClient(request));
+    }
+
+    @Test
+    void shouldUpdateExistingPersonClient() {
         // given
         Long clientId = 1L;
-        when(this.clientRepository.findById(clientId)).thenReturn(Optional.of(Client.builder().build()));
+        when(this.clientRepository.findById(clientId)).thenReturn(Optional.of(Person.builder().build()));
 
-        UpdateClientRequest request = UpdateClientRequest.builder()
+        UpdatePersonClientRequest request = UpdatePersonClientRequest.builder()
                 .clientId(clientId)
                 .name(NAME)
                 .surname(SURNAME)
                 .phoneNumber(PHONE_NUMBER)
-                .address(Address.builder()
-                        .city(CITY)
-                        .street(STREET)
-                        .houseNumber(Integer.toString(1))
-                        .zipCode(ZIP)
-                        .build())
-                .deliveryAddress(Address.builder()
-                        .city(CITY)
-                        .street(STREET)
-                        .houseNumber(Integer.toString(1))
-                        .zipCode(ZIP)
-                        .build())
+                .address(ADDRESS)
+                .deliveryAddress(List.of(ADDRESS))
                 .build();
         // when
-        Long updatedClientId = this.clientService.updateClient(request);
+        Person personClient = this.clientService.updatePersonClient(request);
 
         // then
-        assertThat(updatedClientId, isNotNull());
-        assertThat(updatedClientId, equalTo(clientId));
+        assertThat(personClient, isNotNull());
+        assertThat(personClient.getId(), equalTo(clientId));
+        assertThat(personClient.getName(), equalTo(NAME));
+        assertThat(personClient.getSurname(), equalTo(SURNAME));
+        assertThat(personClient.getPhoneNumber(), equalTo(PHONE_NUMBER));
+        assertThat(personClient.getAddress(), equalTo(ADDRESS));
+        assertThat(personClient.getDeliveryAddresses(), equalTo(List.of(ADDRESS)));
     }
 
     @Test
-    void shouldThrowWhenTryingToUpdateNonExistingClient() {
+    void shouldThrowWhenTryingToUpdateNonExistingPersonClient() {
         // given
-        UpdateClientRequest request = UpdateClientRequest.builder()
+        UpdatePersonClientRequest request = UpdatePersonClientRequest.builder()
                 .clientId(new Random().nextLong())
                 .build();
+        when(this.clientRepository.findById(anyLong())).thenThrow(new AttemptToUpdateNonExistingClientException());
 
         // when
         Assertions.assertThrows(AttemptToUpdateNonExistingClientException.class,
-                () -> this.clientService.updateClient(request));
+                () -> this.clientService.updatePersonClient(request));
+    }
+
+    @Test
+    void shouldThrowWhenTryingToUpdateNonExistingCompanyClient() {
+        // given
+        UpdateCompanyClientRequest request = UpdateCompanyClientRequest.builder()
+                .clientId(new Random().nextLong())
+                .build();
+
+        when(this.clientRepository.findById(anyLong())).thenThrow(new AttemptToUpdateNonExistingClientException());
+
+        // when
+        Assertions.assertThrows(AttemptToUpdateNonExistingClientException.class,
+                () -> this.clientService.updateCompanyClient(request));
     }
 
     @Test
@@ -140,7 +197,7 @@ class ClientServiceTest {
                 .clientId(clientId)
                 .build();
 
-        when(this.clientRepository.findById(anyLong())).thenReturn(Optional.of(Client.builder().build()));
+        when(this.clientRepository.findById(anyLong())).thenReturn(Optional.of(Company.builder().build()));
 
         // when
         Long removedClientId = this.clientService.removeClient(request);

@@ -2,9 +2,9 @@ package com.invoices.client.api;
 
 
 import com.invoices.client.ClientService;
-import com.invoices.client.api.requests.AddClientRequest;
+import com.invoices.client.api.requests.AddCompanyClientRequest;
 import com.invoices.client.api.requests.RemoveClientRequest;
-import com.invoices.client.api.requests.UpdateClientRequest;
+import com.invoices.client.api.requests.UpdatePersonClientRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,7 +16,7 @@ public class ClientEndpoints {
     private final ClientService clientService;
 
     @PostMapping("/add")
-    public Long addClient(AddClientRequest request) {
+    public Long addClient(AddCompanyClientRequest request) {
         return this.clientService.addClient(request);
     }
 
@@ -26,7 +26,7 @@ public class ClientEndpoints {
     }
 
     @PutMapping("/update")
-    public Long updateClient(UpdateClientRequest request) {
+    public Long updateClient(UpdatePersonClientRequest request) {
         return this.clientService.updateClient(request);
     }
 }
