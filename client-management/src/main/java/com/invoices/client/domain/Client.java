@@ -1,33 +1,39 @@
 package com.invoices.client.domain;
 
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
+import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNullElse;
 
-@Entity
 @NoArgsConstructor
-@Getter
-public abstract class Client {
+@Data
+@MappedSuperclass
+public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
 
     String name;
+    @OneToOne(cascade = CascadeType.PERSIST)
     Address address;
     String phoneNumber;
 
-    @OneToMany
-    private List<Address> deliveryAddresses;
+    @OneToMany(cascade = CascadeType.PERSIST)
+    @ElementCollection
+    private List<Address> deliveryAddresses = new ArrayList<>();
 
     @Builder
     Client(String name, Address address, String phoneNumber, List<Address> deliveryAddresses) {

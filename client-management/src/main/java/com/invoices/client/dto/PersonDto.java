@@ -1,18 +1,18 @@
-package com.invoices.client.api.requests;
+package com.invoices.client.dto;
 
 import com.invoices.client.domain.Address;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Value
 @Builder
-public class UpdatePersonClientRequest {
-    Long id;
+class PersonDto {
     String name;
     String surname;
-    String phoneNumber;
     Address address;
-    List<Address> deliveryAddress;
+    String phoneNumber;
+    List<Address> deliveryAddresses = new ArrayList<>();
 }

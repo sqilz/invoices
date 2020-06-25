@@ -15,7 +15,7 @@ import java.util.List;
 public class Person extends Client {
     private String surname;
 
-    @Builder
+    @Builder(builderMethodName = "personBuilder")
     public Person(String name, Address address, String phoneNumber, List<Address> deliveryAddresses, String surname) {
         super(name, address, phoneNumber, deliveryAddresses);
         this.surname = surname;

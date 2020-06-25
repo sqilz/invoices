@@ -8,11 +8,19 @@ import com.invoices.client.api.requests.UpdatePersonClientRequest;
 import com.invoices.client.domain.Client;
 import com.invoices.client.domain.Company;
 import com.invoices.client.domain.Person;
+import com.invoices.client.exceptions.AttemptToAddCompanyClientWithAlreadyExistingNip;
+import com.invoices.client.exceptions.AttemptToAddExistingPersonClient;
+import com.invoices.client.exceptions.AttemptToRemoveNonExistingClientException;
+import com.invoices.client.exceptions.AttemptToUpdateNonExistingClientException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.Conditions;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
 
 @Slf4j
 @Service
@@ -20,37 +28,51 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class ClientService {
     private final ClientRepository clientRepository;
+    private final CompanyRepository companyRepository;
+    private final PersonRepository personRepository;
 
-    public Long addCompanyClient(AddCompanyClientRequest request) {
-        Company company = (Company) this.clientRepository.save(Company.builder()
+    @Transactional
+    public String addCompanyClient(AddCompanyClientRequest request) throws AttemptToAddCompanyClientWithAlreadyExistingNip {
+        if (this.companyRepository.existsByNip(request.getNip())) {
+            throw new AttemptToAddCompanyClientWithAlreadyExistingNip();
+        }
+
+        Company company = Company.companyBuilder()
+                .nip(request.getNip())
                 .name(request.getName())
                 .contactPeople(request.getContactPeople())
                 .deliveryAddresses(request.getDeliveryAddresses())
-                .build());
+                .build();
 
-        log.info("Company successfully added!");
+        this.companyRepository.save(company);
+        log.info("Company successfully added!" + " " + company.toString());
 
-        return company.getId();
+        return company.getName();
     }
 
-    public Long addPersonClient(AddPersonClientRequest request) {
-        Person person = (Person) this.clientRepository.save(Person.builder()
+    public String addPersonClient(AddPersonClientRequest request) throws AttemptToAddExistingPersonClient {
+        if (this.personRepository.existsByNameAndSurnameAndAddress(request.getName(), request.getSurname(), request.getAddress())) {
+            throw new AttemptToAddExistingPersonClient();
+        }
+
+        Person person = Person.personBuilder()
                 .name(request.getName())
                 .surname(request.getSurname())
                 .address(request.getAddress())
                 .phoneNumber(request.getPhoneNumber())
                 .deliveryAddresses(request.getDeliveryAddresses())
-                .build());
+                .build();
 
+        this.personRepository.save(person);
         log.info("Company successfully added!");
 
-        return person.getId();
+        return person.getName() + " " + person.getSurname();
     }
 
     @SneakyThrows
     public Long removeClient(RemoveClientRequest request) {
-        Client client = (Client) this.clientRepository.findById(request.getClientId())
-                .orElseThrow(() -> new IllegalStateException("no such client"));
+        Client client = this.clientRepository.findById(request.getClientId())
+                .orElseThrow(AttemptToRemoveNonExistingClientException::new);
 
         this.clientRepository.delete(client);
 
@@ -58,13 +80,26 @@ public class ClientService {
         return client.getId();
     }
 
-    public Person updatePersonClient(UpdatePersonClientRequest request) {
+    @Transactional
+    public Person updatePersonClient(UpdatePersonClientRequest request) throws AttemptToUpdateNonExistingClientException {
+        Person person = this.personRepository.findById(request.getId())
+                .orElseThrow(AttemptToUpdateNonExistingClientException::new);
 
-        return 1L;
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
+        modelMapper.map(request, person);
+
+        this.personRepository.save(person);
+
+        return person;
     }
 
-    public Company updateCompanyClient(UpdateCompanyClientRequest request) {
+    public Company updateCompanyClient(UpdateCompanyClientRequest request) throws AttemptToUpdateNonExistingClientException {
+        Company company = this.companyRepository.findById(request.getClientId())
+                .orElseThrow(AttemptToUpdateNonExistingClientException::new);
 
-        return 1L;
+        this.companyRepository.save(company);
+
+        return company;
     }
 }
