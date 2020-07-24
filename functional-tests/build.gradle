@@ -1,0 +1,8 @@
+dependencies {
+    compile 'io.rest-assured:json-path'
+    compile 'com.fasterxml.jackson.core:jackson-databind'
+
+    testCompile 'io.rest-assured:rest-assured'
+    testCompile 'org.junit.jupiter:junit-jupiter'
+    testCompile 'org.assertj:assertj-core'
+}

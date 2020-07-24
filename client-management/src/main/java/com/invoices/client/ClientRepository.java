@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClientRepository extends JpaRepository<Client, Long> {
+    boolean existsByNip(String nip);
+
+    boolean existsByNameAndSurnameAndPhoneNumber(String name, String surname, String phoneNumber);
 }

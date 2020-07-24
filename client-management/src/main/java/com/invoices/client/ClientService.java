@@ -1,13 +1,11 @@
 package com.invoices.client;
 
-import com.invoices.client.api.requests.AddCompanyClientRequest;
-import com.invoices.client.api.requests.AddPersonClientRequest;
+import com.invoices.client.api.requests.RegisterClientRequest;
 import com.invoices.client.api.requests.RemoveClientRequest;
-import com.invoices.client.api.requests.UpdateCompanyClientRequest;
-import com.invoices.client.api.requests.UpdatePersonClientRequest;
+import com.invoices.client.api.requests.UpdateClientRequest;
+import com.invoices.client.domain.Address;
 import com.invoices.client.domain.Client;
-import com.invoices.client.domain.Company;
-import com.invoices.client.domain.Person;
+import com.invoices.client.dto.ClientQueryDto;
 import com.invoices.client.exceptions.AttemptToAddCompanyClientWithAlreadyExistingNip;
 import com.invoices.client.exceptions.AttemptToAddExistingPersonClient;
 import com.invoices.client.exceptions.AttemptToRemoveNonExistingClientException;
@@ -18,9 +16,16 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.Conditions;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 @Slf4j
 @Service
@@ -28,45 +33,41 @@ import javax.transaction.Transactional;
 @AllArgsConstructor
 public class ClientService {
     private final ClientRepository clientRepository;
-    private final CompanyRepository companyRepository;
-    private final PersonRepository personRepository;
+    private final AddressRepository addressRepository;
 
     @Transactional
-    public String addCompanyClient(AddCompanyClientRequest request) throws AttemptToAddCompanyClientWithAlreadyExistingNip {
-        if (this.companyRepository.existsByNip(request.getNip())) {
+    public Client registerClient(RegisterClientRequest request) throws AttemptToAddCompanyClientWithAlreadyExistingNip, AttemptToAddExistingPersonClient {
+        if (!isNullOrEmpty(request.getNip()) && this.clientRepository.existsByNip(request.getNip())) {
             throw new AttemptToAddCompanyClientWithAlreadyExistingNip();
         }
 
-        Company company = Company.companyBuilder()
-                .nip(request.getNip())
-                .name(request.getName())
-                .contactPeople(request.getContactPeople())
-                .deliveryAddresses(request.getDeliveryAddresses())
-                .build();
-
-        this.companyRepository.save(company);
-        log.info("Company successfully added!" + " " + company.toString());
-
-        return company.getName();
-    }
-
-    public String addPersonClient(AddPersonClientRequest request) throws AttemptToAddExistingPersonClient {
-        if (this.personRepository.existsByNameAndSurnameAndAddress(request.getName(), request.getSurname(), request.getAddress())) {
+        if (this.clientRepository.existsByNameAndSurnameAndPhoneNumber(request.getName(), request.getSurname(), request.getPhoneNumber())) {
             throw new AttemptToAddExistingPersonClient();
         }
 
-        Person person = Person.personBuilder()
+        Set<Address> deliveryAddresses = request.getDeliveryAddresses().stream()
+                .filter(f -> !f.equals(request.getAddress()))
+                .map(this::findInRepositoryOrUseProvided)
+                .collect(Collectors.toSet());
+        deliveryAddresses.add(request.getAddress());
+
+        Client client = Client.builder()
+                .companyName(request.getCompanyName())
+                .nip(request.getNip())
+                .vat(request.getVat())
                 .name(request.getName())
                 .surname(request.getSurname())
-                .address(request.getAddress())
+                .dateOfBirth(request.getDateOfBirth())
                 .phoneNumber(request.getPhoneNumber())
-                .deliveryAddresses(request.getDeliveryAddresses())
+                .fax(request.getFax())
+                .address(request.getAddress())
+                .deliveryAddresses(deliveryAddresses)
                 .build();
 
-        this.personRepository.save(person);
-        log.info("Company successfully added!");
+        this.clientRepository.save(client);
+        log.info("Company successfully added!" + " " + client.toString());
 
-        return person.getName() + " " + person.getSurname();
+        return client;
     }
 
     @SneakyThrows
@@ -76,30 +77,39 @@ public class ClientService {
 
         this.clientRepository.delete(client);
 
-        log.info("Company removed");
+        log.info("Client removed from database");
         return client.getId();
     }
 
     @Transactional
-    public Person updatePersonClient(UpdatePersonClientRequest request) throws AttemptToUpdateNonExistingClientException {
-        Person person = this.personRepository.findById(request.getId())
+    public Client updateClient(UpdateClientRequest request) throws AttemptToUpdateNonExistingClientException {
+        Client client = this.clientRepository.findById(request.getId())
                 .orElseThrow(AttemptToUpdateNonExistingClientException::new);
 
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
-        modelMapper.map(request, person);
+        modelMapper.map(request, client);
 
-        this.personRepository.save(person);
+        this.clientRepository.save(client);
 
-        return person;
+        return client;
     }
 
-    public Company updateCompanyClient(UpdateCompanyClientRequest request) throws AttemptToUpdateNonExistingClientException {
-        Company company = this.companyRepository.findById(request.getClientId())
-                .orElseThrow(AttemptToUpdateNonExistingClientException::new);
+    @Transactional(propagation = Propagation.NESTED)
+    public Address findInRepositoryOrUseProvided(Address address) {
 
-        this.companyRepository.save(company);
+        return this.addressRepository.findAddressByCityAndStreetAndHouseNumber(
+                address.getCity(), address.getStreet(), address.getHouseNumber())
+                .orElse(this.addressRepository.save(address));
+    }
 
-        return company;
+    @Transactional
+    public List<Client> filterClients(ClientQueryDto queryDto) {
+        Client build = Client.builder().build();
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setPropertyCondition(Conditions.isNotNull());
+        modelMapper.map(queryDto, build);
+        Example<Client> example = Example.of(build);
+        return this.clientRepository.findAll(example);
     }
 }

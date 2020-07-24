@@ -15,3 +15,4 @@ pluginManagement {
 rootProject.name = 'invoices'
 include 'client-management'
 include 'invoice-management'
+include 'functional-tests'
