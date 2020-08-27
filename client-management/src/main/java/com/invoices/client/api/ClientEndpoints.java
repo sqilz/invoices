@@ -47,7 +47,7 @@ public class ClientEndpoints {
         return this.clientService.updateClient(request);
     }
 
-    @GetMapping(value = "/filter", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Client>> query(@RequestParam(required = false) Long id,
                                               @RequestParam(required = false) String companyName,
                                               @RequestParam(required = false) String nip,
@@ -55,10 +55,10 @@ public class ClientEndpoints {
                                               @RequestParam(required = false) String name,
                                               @RequestParam(required = false) String surname,
                                               @RequestParam(required = false) String dateOfBirth,
-                                              @RequestParam(required = false) AddressDto address,
+                                              @RequestParam(required = false) AddressDto address, // fix querying
                                               @RequestParam(required = false) String phoneNumber,
                                               @RequestParam(required = false) String fax) {
-
+        // command query response asdasasdffff
         ClientQueryDto clientDto = ClientQueryDto.builder()
                 .id(id)
                 .companyName(companyName)

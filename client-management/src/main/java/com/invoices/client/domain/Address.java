@@ -25,4 +25,7 @@ public class Address {
     private String houseNumber;
     private String city;
     private String zipCode;
+
+    // immutable addresses for whole system problem
+    //
 }

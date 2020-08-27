@@ -3,11 +3,10 @@ package com.invoices.client.api.requests;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.invoices.client.domain.Address;
+import com.invoices.client.domain.DeliveryAddresses;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.util.Set;
 
 @Value
 public class RegisterClientRequest {
@@ -26,7 +25,7 @@ public class RegisterClientRequest {
     String phoneNumber;
     String fax;
 
-    Set<Address> deliveryAddresses;
+    DeliveryAddresses deliveryAddresses;
 
     @JsonCreator
     @Builder
@@ -39,7 +38,7 @@ public class RegisterClientRequest {
                                  @JsonProperty("address") Address address,
                                  @JsonProperty("phoneNumber") String phoneNumber,
                                  @JsonProperty("fax") String fax,
-                                 @JsonProperty("deliveryAddresses") Set<Address> deliveryAddresses) {
+                                 @JsonProperty("deliveryAddresses") DeliveryAddresses deliveryAddresses) {
         this.companyName = companyName;
         this.nip = nip;
         this.vat = vat;

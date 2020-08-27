@@ -5,6 +5,7 @@ import com.invoices.client.api.requests.RemoveClientRequest;
 import com.invoices.client.api.requests.UpdateClientRequest;
 import com.invoices.client.domain.Address;
 import com.invoices.client.domain.Client;
+import com.invoices.client.domain.DeliveryAddresses;
 import com.invoices.client.dto.ClientQueryDto;
 import com.invoices.client.exceptions.AttemptToAddCompanyClientWithAlreadyExistingNip;
 import com.invoices.client.exceptions.AttemptToAddExistingPersonClient;
@@ -45,7 +46,7 @@ public class ClientService {
             throw new AttemptToAddExistingPersonClient();
         }
 
-        Set<Address> deliveryAddresses = request.getDeliveryAddresses().stream()
+        Set<Address> deliveryAddresses = request.getDeliveryAddresses().getDeliveryAddr().stream()
                 .filter(f -> !f.equals(request.getAddress()))
                 .map(this::findInRepositoryOrUseProvided)
                 .collect(Collectors.toSet());
@@ -61,7 +62,7 @@ public class ClientService {
                 .phoneNumber(request.getPhoneNumber())
                 .fax(request.getFax())
                 .address(request.getAddress())
-                .deliveryAddresses(deliveryAddresses)
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(deliveryAddresses).build())
                 .build();
 
         this.clientRepository.save(client);

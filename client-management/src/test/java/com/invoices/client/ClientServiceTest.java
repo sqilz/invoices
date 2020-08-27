@@ -5,6 +5,7 @@ import com.invoices.client.api.requests.RemoveClientRequest;
 import com.invoices.client.api.requests.UpdateClientRequest;
 import com.invoices.client.domain.Address;
 import com.invoices.client.domain.Client;
+import com.invoices.client.domain.DeliveryAddresses;
 import com.invoices.client.exceptions.AttemptToAddCompanyClientWithAlreadyExistingNip;
 import com.invoices.client.exceptions.AttemptToAddExistingPersonClient;
 import com.invoices.client.exceptions.AttemptToRemoveNonExistingClientException;
@@ -24,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 
 @ExtendWith({MockitoExtension.class})
@@ -74,7 +74,7 @@ class ClientServiceTest {
                 .phoneNumber(RANDOM_ID)
                 .fax(RANDOM_ID)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
 
         Client expected = Client.builder()
@@ -84,11 +84,8 @@ class ClientServiceTest {
                 .phoneNumber(RANDOM_ID)
                 .fax(RANDOM_ID)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
-
-        given(this.addressRepository.findAddressByCityAndStreetAndHouseNumber(anyString(), anyString(), anyString()))
-                .willReturn(Optional.of(ADDRESS));
 
         // when
         Client client = this.clientService.registerClient(request);
@@ -107,7 +104,7 @@ class ClientServiceTest {
                 .dateOfBirth("12-12-2000")
                 .phoneNumber(RANDOM_ID)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
 
         Client expected = Client.builder()
@@ -116,18 +113,14 @@ class ClientServiceTest {
                 .dateOfBirth("12-12-2000")
                 .phoneNumber(RANDOM_ID)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
-
-        given(this.addressRepository.findAddressByCityAndStreetAndHouseNumber(anyString(), anyString(), anyString()))
-                .willReturn(Optional.of(ADDRESS));
 
         // when
         Client client = this.clientService.registerClient(request);
 
         // then
-        assertThat(client).isNotNull();
-        assertThat(client).isEqualTo(expected);
+        assertThat(client).isNotNull().isEqualTo(expected);
     }
 
     @Test
@@ -141,7 +134,7 @@ class ClientServiceTest {
                 .phoneNumber(RANDOM_ID)
                 .fax(RANDOM_ID)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
 
         final RegisterClientRequest existingAddress = RegisterClientRequest.builder()
@@ -151,11 +144,8 @@ class ClientServiceTest {
                 .phoneNumber(RANDOM_ID)
                 .fax(RANDOM_ID)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
-
-        given(this.addressRepository.findAddressByCityAndStreetAndHouseNumber(anyString(), anyString(), anyString()))
-                .willReturn(Optional.of(ADDRESS));
 
         // register client (adds an address)
         Client registerClient = this.clientService.registerClient(firstClient);
@@ -166,7 +156,7 @@ class ClientServiceTest {
         // then
         assertThat(clientWithExistingAddress).isNotNull();
         assertThat(clientWithExistingAddress.getAddress().getId()).isEqualTo(registerClient.getAddress().getId());
-        assertThat(clientWithExistingAddress.getDeliveryAddresses().stream()
+        assertThat(clientWithExistingAddress.getDeliveryAddresses().getDeliveryAddr().stream()
                 .findFirst().get().getId()).isEqualTo(registerClient.getAddress().getId());
     }
 
@@ -206,7 +196,7 @@ class ClientServiceTest {
                 .name("test")
                 .surname("test")
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
 
         when(this.clientRepository.findById(anyLong())).thenReturn(Optional.of(person));
@@ -217,7 +207,7 @@ class ClientServiceTest {
                 .surname(SURNAME)
                 .phoneNumber(PHONE_NUMBER)
                 .address(ADDRESS)
-                .deliveryAddresses(Set.of(ADDRESS))
+                .deliveryAddresses(DeliveryAddresses.builder().deliveryAddr(Set.of(ADDRESS)).build())
                 .build();
         // when
         Client personClient = this.clientService.updateClient(request);
@@ -229,7 +219,7 @@ class ClientServiceTest {
         assertThat(personClient.getSurname()).isEqualTo(SURNAME);
         assertThat(personClient.getPhoneNumber()).isEqualTo(PHONE_NUMBER);
         assertThat(personClient.getAddress()).isEqualTo(ADDRESS);
-        assertThat(personClient.getDeliveryAddresses()).isEqualTo(Set.of(ADDRESS));
+        assertThat(personClient.getDeliveryAddresses().getDeliveryAddr()).isEqualTo(Set.of(ADDRESS));
     }
 
     @Test

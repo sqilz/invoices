@@ -1,12 +1,12 @@
 package com.invoices.client.api.requests;
 
 import com.invoices.client.domain.Address;
+import com.invoices.client.domain.DeliveryAddresses;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 import java.util.Date;
-import java.util.Set;
 
 @Value
 @Builder
@@ -27,5 +27,5 @@ public class UpdateClientRequest {
     String phoneNumber;
     String fax;
 
-    Set<Address> deliveryAddresses;
+    DeliveryAddresses deliveryAddresses;
 }

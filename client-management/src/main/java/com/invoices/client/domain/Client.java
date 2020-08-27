@@ -12,7 +12,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import java.util.Set;
 
 @Data
 @Entity
@@ -24,6 +23,7 @@ public class Client {
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long id;
     // TODO: query + generic query + clients?vat=xxx clients?vat=xxx&nip=yyyy - INDEXES!!!
+    //
     String companyName;
     String nip;
     String vat;
@@ -38,5 +38,5 @@ public class Client {
     String fax;
 
     @OneToMany
-    private Set<Address> deliveryAddresses;
+    private DeliveryAddresses deliveryAddresses;
 }
